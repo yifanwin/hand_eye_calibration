@@ -55,6 +55,28 @@ class FrankRobotWrapper:
         else:
             self.robot.move(motion, asynchronous=True)
 
+    def move_j_async(self, target_joints_deg):
+        """
+        异步关节空间运动（不等待）
+
+        Args:
+            target_joints_deg: 目标关节角度 [度]
+        """
+        target_joints_rad = np.deg2rad(target_joints_deg)
+        motion = JointMotion(target_joints_rad.tolist())
+        self.robot.move(motion, asynchronous=True)
+
+    def join_motion(self):
+        """等待当前运动完成"""
+        self.robot.join_motion()
+
+    def recover(self):
+        """从错误状态恢复"""
+        try:
+            self.robot.recover_from_errors()
+        except Exception as e:
+            print(f"恢复失败: {e}")
+
     def get_tcp_pose_matrix(self) -> np.ndarray:
         """
         获取当前 TCP (末端执行器) 在基座坐标系下的 4x4 变换矩阵
@@ -66,13 +88,15 @@ class FrankRobotWrapper:
         cartesian_state = self.robot.current_cartesian_state
         ee_pose = cartesian_state.pose.end_effector_pose
 
-        # Affine 对象包含 .translation [x,y,z] (米) 和 .rotation (四元数 [x,y,z,w])
+        # Affine 对象包含 .translation [x,y,z] (米) 和 .matrix (4x4矩阵)
         position = ee_pose.translation  # [x, y, z] in meters
-        quaternion = ee_pose.rotation    # [x, y, z, w]
+        # franky.Affine 存储为 4x4 矩阵，提取 3x3 旋转矩阵
+        pose_matrix = ee_pose.matrix
+        rmat = pose_matrix[:3, :3]
 
-        # 四元数转旋转矩阵
-        rotation = R.from_quat(quaternion)
-        rmat = rotation.as_matrix()
+        # 旋转矩阵转四元数
+        rotation = R.from_matrix(rmat)
+        quaternion = rotation.as_quat()  # [x, y, z, w]
 
         # 构建 4x4 变换矩阵
         T = np.eye(4)

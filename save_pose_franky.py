@@ -15,13 +15,13 @@ from scipy.spatial.transform import Rotation as R
 from franky import Robot
 
 # --- Franka 连接配置 ---
-FRANKA_IP = "10.90.90.1"
+FRANKA_IP = "172.16.0.2"
 
 # 时间戳
 timestamp = time.strftime("%Y%m%d_%H%M%S")
 
 # 输出路径
-TRA_JOINTS_DIR = './hand_eye_calibration/trajectory'
+TRA_JOINTS_DIR = './trajectory'
 tra_joints_path = f'{TRA_JOINTS_DIR}/trajectory_joints_{timestamp}.npy'
 tra_car_path = f'{TRA_JOINTS_DIR}/trajectory_cartesian_{timestamp}.npy'
 
@@ -62,12 +62,16 @@ try:
         ee_pose = cartesian_state.pose.end_effector_pose
 
         # Affine -> 位置 [m] + 四元数 [x,y,z,w]
+        # franky.Affine 是 Eigen::Affine3d 的包装
         pos_m = ee_pose.translation  # 米
-        quat = ee_pose.rotation      # [x,y,z,w]
+        # 使用 .matrix 获取 4x4 矩阵（是属性不是方法）
+        pose_matrix = ee_pose.matrix
+        rot_matrix = pose_matrix[:3, :3]
+        r = R.from_matrix(rot_matrix)
+        quat = r.as_quat()  # [x,y,z,w]
 
         # 转换为 [x,y,z,rx,ry,rz] 毫米/度
         pos_mm = pos_m * 1000  # 米转毫米
-        r = R.from_quat(quat)
         euler_deg = r.as_euler('xyz', degrees=True)  # 度
 
         cartesian_pose = np.concatenate([pos_mm, euler_deg])

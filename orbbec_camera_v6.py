@@ -179,6 +179,9 @@ class OrbbecCamera:
 
     def get_depth_intrinsics(self) -> Dict[str, Any]:
         """获取深度相机的完整内参字典 (包含畸变)。"""
+        # 如果深度内参为空（enable_depth=False），使用彩色相机内参作为替代
+        if not self.depth_intrinsics or 'fx' not in self.depth_intrinsics:
+            return self.color_intrinsics
         return self.depth_intrinsics
 
     def get_color_intrinsics_matrix(self) -> np.ndarray:
@@ -194,6 +197,9 @@ class OrbbecCamera:
     def get_depth_intrinsics_matrix(self) -> np.ndarray:
         """以 3x3 Numpy 矩阵形式获取深度相机内参 K。"""
         intr = self.depth_intrinsics
+        # 如果深度内参为空（enable_depth=False），使用彩色相机内参作为替代
+        if not intr or 'fx' not in intr:
+            intr = self.color_intrinsics
         k_matrix = np.array([
             [intr['fx'], 0,          intr['cx']],
             [0,          intr['fy'], intr['cy']],
@@ -207,6 +213,8 @@ class OrbbecCamera:
 
     def get_depth_distortion_coeffs(self) -> np.ndarray:
         """以 Numpy 数组形式获取深度相机畸变系数。"""
+        if not self.depth_intrinsics or 'fx' not in self.depth_intrinsics:
+            return self.color_intrinsics.get("distortion", np.zeros(8, dtype=np.float32))
         return self.depth_intrinsics.get("distortion", np.zeros(8, dtype=np.float32))
 
     def get_extrinsics(self) -> Optional[np.ndarray]:

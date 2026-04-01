@@ -23,12 +23,12 @@ timestamp = time.strftime("%Y%m%d_%H%M%S")
 
 # ======================== 全局可配置项 ========================
 # Franka 配置
-FRANKA_IP = "10.90.90.1"
+FRANKA_IP = "172.16.0.2"
 
 # 文件路径
-TRAJECTORY_FILE = 'hand_eye_calibration/trajectory/trajectory_joints.npy'
-CALIB_DATA_DIR = 'hand_eye_calibration/calib_data'
-CAPTURE_DIR = 'hand_eye_calibration/captures'
+TRAJECTORY_FILE = './trajectory/trajectory_joints_20260331_194232.npy'
+CALIB_DATA_DIR = './hand_eye_calibration/calib_data'
+CAPTURE_DIR = './hand_eye_calibration/captures'
 
 # 标定参数
 LOOP_COUNT = 3
@@ -38,8 +38,8 @@ PATTERN_SIZE = (11, 8)
 SQUARE_LEN = 0.01  # 棋盘格方块尺寸 10mm
 
 # 输出路径
-OUTPUT_JSON = '/home/fanfan/proj/oea/oea-rekep-real-plugin/runtime/real_calibration/orbbec_config/orbbec_calibration.json'
-OUTPUT_NPY = f'hand_eye_calibration/hand_eye_calib_output/T_cam2base_{timestamp}.npy'
+OUTPUT_JSON = '../oea-rekep-real-plugin/runtime/real_calibration/orbbec_config/orbbec_calibration.json'
+OUTPUT_NPY = f'./hand_eye_calib_output/T_cam2base_{timestamp}.npy'
 CALIB_DATA_PATTERN = f"h_e_calib_data_{timestamp}_*.yaml"
 # =============================================================
 
@@ -140,10 +140,17 @@ def run_calibration_collection(robot, camera, loop_index=1):
         print(f"\n--- 执行点位 {i+1}/{len(target_joints_array_deg)} ---")
 
         try:
-            robot.move_j(joint_deg.tolist(), vel=SPEED)
+            # 异步运动，不等待完成
+            robot.move_j_async(joint_deg.tolist())
         except Exception as e:
             print(f"移动报错: {e}，跳过此点")
             continue
+
+        # 等待运动完成
+        robot.join_motion()
+
+        # 稳定等待时间
+        time.sleep(WAIT_TIME)
 
         try:
             tcp_matrix = robot.get_tcp_pose_matrix()
