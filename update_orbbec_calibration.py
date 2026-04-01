@@ -14,8 +14,8 @@ from datetime import datetime
 # ========== 全局参数 ==========
 CONFIG_PATH = "/media/hcp/disk/workspace/oea/oea-rekep-real-plugin/runtime/real_calibration/orbbec_config/orbbec_calibration.json"
 
-COLOR_WIDTH = 1280
-COLOR_HEIGHT = 720
+COLOR_WIDTH = 1920
+COLOR_HEIGHT = 1080
 COLOR_FPS = 30
 
 DEPTH_WIDTH = 640
