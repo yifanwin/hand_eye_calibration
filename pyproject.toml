@@ -10,13 +10,13 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=1.24",
-  "opencv-python-headless>=4.8",
+  "opencv-python-headless>=4.8,<5",  # OpenCV 5.x 移除了 calibrateHandEye / CALIB_HAND_EYE_*
   "PyYAML>=6.0",
   "scipy>=1.10",
 ]
 
 [project.optional-dependencies]
-franka = ["franky-control>=1.1"]
+franka = ["franky-control==1.1.2"]  # 1.1.4+ 捆绑 libfranka 0.18+,需机器人固件 >= 5.9.0 (server 10);1.1.2 捆绑 0.15.3,兼容 server 9
 realsense = ["pyrealsense2>=2.55"]
 test = ["pytest>=7.4"]
 

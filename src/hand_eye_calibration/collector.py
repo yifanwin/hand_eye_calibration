@@ -51,11 +51,8 @@ class Collector:
                     observation_id = uuid4().hex
                     raw_path = debug_path = None
                     if self.save_images:
+                        # 只保存划线标注后的图片，不保存原始图
                         image_dir = self.session.path / "images"
-                        raw = image_dir / f"{observation_id}_color.png"
-                        if not cv2.imwrite(str(raw), frame.color_bgr):
-                            raise OSError(f"failed to write {raw}")
-                        raw_path = str(raw.relative_to(self.session.path))
                         if detection.debug_image_bgr is not None:
                             debug = image_dir / f"{observation_id}_debug.png"
                             if not cv2.imwrite(str(debug), detection.debug_image_bgr):
