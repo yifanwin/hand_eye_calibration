@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Runtime calibration data and generated artifacts
+data/
+captures/
+sessions/
+exports/
+hand_eye_calibration/captures/

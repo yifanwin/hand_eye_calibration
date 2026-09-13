@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hand-eye-calibration"
+version = "0.1.0"
+description = "Adapter-based eye-to-hand calibration for robot and RGB-D cameras"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
+  "PyYAML>=6.0",
+  "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+franka = ["franky-control>=1.1"]
+realsense = ["pyrealsense2>=2.55"]
+test = ["pytest>=7.4"]
+
+[project.scripts]
+handeye = "hand_eye_calibration.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+

@@ -1,0 +1,2 @@
+"""Calibration target detectors."""
+
