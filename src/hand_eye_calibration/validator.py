@@ -46,9 +46,10 @@ class Validator:
             raise ValueError(f"robot rotation axes are degenerate: rank={axis_rank}")
         return {"observation_count": float(len(observations)), "rotation_axis_rank": float(axis_rank)}
 
-    def validate(self, observations: list[Observation], result: CalibrationResult) -> ValidationReport:
-        metrics = self.check_solvable(observations)
-        reprojection = np.array([obs.reprojection_rmse_px for obs in observations], dtype=np.float64)
+    def per_observation_errors(
+        self, observations: list[Observation], result: CalibrationResult
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """计算每个观测的靶标一致性误差,返回 (平移误差 mm, 旋转误差 deg)。"""
         T_ee_target = [
             np.linalg.inv(obs.T_base_ee) @ result.T_base_camera @ obs.T_camera_target
             for obs in observations
@@ -58,6 +59,12 @@ class Validator:
         mean_rotation = rotations.mean()
         translation_errors_mm = np.linalg.norm(translations - translations.mean(axis=0), axis=1) * 1000.0
         rotation_errors_deg = (mean_rotation.inv() * rotations).magnitude() * 180.0 / np.pi
+        return translation_errors_mm, rotation_errors_deg
+
+    def validate(self, observations: list[Observation], result: CalibrationResult) -> ValidationReport:
+        metrics = self.check_solvable(observations)
+        reprojection = np.array([obs.reprojection_rmse_px for obs in observations], dtype=np.float64)
+        translation_errors_mm, rotation_errors_deg = self.per_observation_errors(observations, result)
         positions = np.array([obs.T_base_ee[:3, 3] for obs in observations])
         translation_span = float(np.max(np.linalg.norm(positions[:, None] - positions[None, :], axis=2)))
         rotation_span = self._max_rotation_span_deg(observations)

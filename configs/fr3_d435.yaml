@@ -27,6 +27,10 @@ collection:
   save_images: true
 solver:
   method: park
+rejection:
+  mad_multiplier: 3.0
+  max_iterations: 10
+  max_removal_fraction: 0.2
 validation:
   min_observations: 10
   min_max_relative_rotation_deg: 15.0

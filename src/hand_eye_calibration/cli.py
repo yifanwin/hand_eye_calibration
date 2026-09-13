@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -10,7 +11,7 @@ from .collector import Collector
 from .config import construct, load_config
 from .exporter import Exporter
 from .session import CalibrationSession
-from .solver import HandEyeSolver
+from .solver import HandEyeSolver, RejectionSettings, RobustHandEyeSolver
 from .trajectory import load_trajectory, save_trajectory
 from .validator import ValidationThresholds, Validator
 
@@ -22,6 +23,15 @@ def _thresholds(config: dict) -> ValidationThresholds:
     if unknown:
         raise ValueError(f"unknown validation settings: {sorted(unknown)}")
     return ValidationThresholds(**values)
+
+
+def _rejection_settings(config: dict) -> RejectionSettings:
+    allowed = RejectionSettings.__dataclass_fields__
+    values = config.get("rejection", {})
+    unknown = set(values) - set(allowed)
+    if unknown:
+        raise ValueError(f"unknown rejection settings: {sorted(unknown)}")
+    return RejectionSettings(**values)
 
 
 def _connect(robot, camera=None) -> None:
@@ -101,10 +111,17 @@ def command_solve(args: argparse.Namespace) -> int:
     observations = session.observations()
     validator = Validator(_thresholds(config))
     validator.check_solvable(observations)
-    result = HandEyeSolver(config["solver"].get("method", "park")).solve(observations)
-    report = validator.validate(observations, result)
-    path = session.save_result(result, report)
+    base_solver = HandEyeSolver(config["solver"].get("method", "park"))
+    outcome = RobustHandEyeSolver(base_solver, validator, _rejection_settings(config)).solve(observations)
+    report = validator.validate(outcome.kept, outcome.result)
+    report = replace(report, rejected_observation_ids=outcome.rejected_ids)
+    path = session.save_result(outcome.result, report)
     print(f"{report.status}: {path}")
+    if outcome.rejected_ids:
+        print(
+            f"rejected {len(outcome.rejected_ids)}/{len(observations)} observations "
+            f"in {outcome.iterations} iteration(s)"
+        )
     for warning in report.warnings:
         print(f"warning: {warning}")
     return 0

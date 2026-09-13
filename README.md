@@ -50,7 +50,7 @@ handeye solve --config configs/fr3_d435.yaml \
   --session data/sessions/fr3_d435_001
 ```
 
-所有 run 的 observation 只调用一次 OpenCV Park 手眼求解，不计算或平均“每轮结果”。硬错误阻止求解；质量超阈值写入 `validation.status=warning`，但保留结果供现场检查。
+所有 run 的 observation 联合调用 OpenCV Park 手眼求解,不计算或平均“每轮结果”。求解采用迭代剔除:`solve -> 靶标一致性误差 -> MAD 自适应判据(倍数 `rejection.mad_multiplier`,默认 3.0)标记离群 -> 每轮最多剔除 `rejection.max_removal_fraction`(默认 20%)并重解`,直到无新离群值;剔除后剩余观测数不会低于 `validation.min_observations`。被剔除的 observation id 记录在 `validation.rejected_observation_ids`。硬错误阻止求解;质量超阈值写入 `validation.status=warning`,但保留结果供现场检查。注意:若绝大多数观测都被标记,通常说明存在系统性问题(时间同步、激励不足),应重新采集而不是依赖剔除。
 
 ### 4. 规范导出
 
@@ -91,6 +91,7 @@ robot:
 - `Collector`：编排采集，不求解。
 - `CalibrationSession`：持久化 session，不访问 SDK。
 - `HandEyeSolver`：纯联合求解。
+- `RobustHandEyeSolver`：迭代剔除离群观测后重解（MAD 自适应判据）。
 - `Validator`：输入门槛、运动覆盖、重投影和固定靶标一致性。
 - `Exporter`：只序列化规范结果。
 

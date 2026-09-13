@@ -279,6 +279,7 @@ class ValidationReport:
     metrics: dict[str, float]
     warnings: tuple[str, ...] = ()
     outlier_observation_ids: tuple[str, ...] = ()
+    rejected_observation_ids: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -286,4 +287,5 @@ class ValidationReport:
             "metrics": self.metrics,
             "warnings": list(self.warnings),
             "outlier_observation_ids": list(self.outlier_observation_ids),
+            "rejected_observation_ids": list(self.rejected_observation_ids),
         }

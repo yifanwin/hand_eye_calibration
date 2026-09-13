@@ -152,6 +152,7 @@ class CalibrationSession:
             status=report_data["status"], metrics=report_data["metrics"],
             warnings=tuple(report_data.get("warnings", [])),
             outlier_observation_ids=tuple(report_data.get("outlier_observation_ids", [])),
+            rejected_observation_ids=tuple(report_data.get("rejected_observation_ids", [])),
         )
         return result, report
 
