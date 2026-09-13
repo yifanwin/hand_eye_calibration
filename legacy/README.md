@@ -2,8 +2,8 @@
 
 这里仅记录旧实现的来源，不参与安装、导入或测试。
 
-- `main`（提交 `9b7ea2e`）：Hans/CPS 的 `save_pose.py`、`cps_hand_eye_calibration.py` 和 `rot_trans_avg_eye_to_hand.py`。
-- `franka-rekep`（提交 `eea2dc4`）：`frank_robot_wrapper.py`、Franka 采集/计算/单体脚本和 `orbbec_camera_v6.py`。
+- `main`（提交 `9b7ea2e`）：Hans/CPS 的 `save_pose.py`、`cps_hand_eye_calibration.py` 和 `rot_trans_avg_eye_to_hand.py`。(已经改名为hans-orbbec-old)
+- `franka-rekep`（提交 `eea2dc4`）：`frank_robot_wrapper.py`、Franka 采集/计算/单体脚本和 `orbbec_camera_v6.py`。（已经改名为franka-orbbec-old）
 
 迁移取舍：
 
