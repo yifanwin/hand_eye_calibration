@@ -211,6 +211,7 @@ class Observation:
     T_base_ee: NDArray[np.float64]
     T_camera_target: NDArray[np.float64]
     reprojection_rmse_px: float
+    camera_host_timestamp_s: float | None = None
     color_image_path: str | None = None
     debug_image_path: str | None = None
 
@@ -233,6 +234,7 @@ class Observation:
             "captured_at_utc": self.captured_at_utc,
             "robot_timestamp_s": self.robot_timestamp_s,
             "camera_timestamp_s": self.camera_timestamp_s,
+            "camera_host_timestamp_s": self.camera_host_timestamp_s,
             "joint_positions_rad": self.joint_positions_rad.tolist(),
             "T_base_ee": self.T_base_ee.tolist(),
             "T_camera_target": self.T_camera_target.tolist(),

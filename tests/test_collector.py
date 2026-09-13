@@ -22,7 +22,7 @@ class FakeRobot(RobotAdapter):
     def read_state(self):
         transform = np.eye(4)
         transform[:3, 3] = self.q
-        return RobotState(self.q, transform, time.monotonic())
+        return RobotState(self.q, transform, time.time())
 
 
 class FakeCamera(CameraAdapter):
@@ -59,4 +59,49 @@ def test_collector_appends_runs_without_solving(tmp_path):
     assert len(session.observations()) == 4
     assert len({item.run_id for item in session.observations()}) == 2
     assert not (session.path / "result.json").exists()
+    # 机器人与相机时间戳处于同一 wall-clock 时钟域，偏差应在容差内
+    for item in session.observations():
+        assert item.camera_host_timestamp_s is not None
+        assert abs(item.camera_host_timestamp_s - item.robot_timestamp_s) < 1.0
+
+
+class DriftingRobot(FakeRobot):
+    """采图前后关节角仍在漂移，模拟未真正静止的机器人。"""
+    def __init__(self):
+        super().__init__()
+        self.read_count = 0
+    def read_state(self):
+        self.read_count += 1
+        self.q = self.q + 0.01  # 每次读数漂移 0.01 rad，超过静止容差
+        return super().read_state()
+
+
+class OffsetClockRobot(FakeRobot):
+    """时间戳与相机处于不同时钟域，模拟采图与关节角时刻不对齐。"""
+    def read_state(self):
+        state = super().read_state()
+        return RobotState(state.joint_positions_rad, state.T_base_ee, time.time() + 10.0)
+
+
+def _make_session(tmp_path, robot, camera):
+    return CalibrationSession.create(
+        tmp_path / "session", config_snapshot={"schema_version": 1},
+        robot_info=robot.get_info(), camera_calibration=camera.get_calibration(),
+    )
+
+
+def test_collector_skips_unsettled_robot(tmp_path):
+    robot, camera = DriftingRobot(), FakeCamera()
+    session = _make_session(tmp_path, robot, camera)
+    collector = Collector(robot, camera, FakeDetector(), session, settle_time_s=0, save_images=False)
+    collector.collect_run(np.array([[0.1, 0.2, 0.3]]), trajectory_name="fake")
+    assert session.observations() == []
+
+
+def test_collector_skips_clock_misaligned_robot(tmp_path):
+    robot, camera = OffsetClockRobot(), FakeCamera()
+    session = _make_session(tmp_path, robot, camera)
+    collector = Collector(robot, camera, FakeDetector(), session, settle_time_s=0, save_images=False)
+    collector.collect_run(np.array([[0.1, 0.2, 0.3]]), trajectory_name="fake")
+    assert session.observations() == []
 

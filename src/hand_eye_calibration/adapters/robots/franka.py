@@ -83,7 +83,8 @@ class FrankaRobotAdapter(RobotAdapter):
         return RobotState(
             joint_positions_rad=joints,
             T_base_ee=pose,
-            timestamp_s=time.monotonic(),
+            # 使用 wall-clock，与相机 host 时间戳同时钟域，便于采图对齐校验
+            timestamp_s=time.time(),
             base_frame=self.base_frame,
             ee_frame=self.ee_frame,
         )

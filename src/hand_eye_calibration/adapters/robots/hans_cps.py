@@ -96,7 +96,8 @@ class HansCPSAdapter(RobotAdapter):
         return RobotState(
             joint_positions_rad=joint_positions_rad,
             T_base_ee=T_base_ee,
-            timestamp_s=time.monotonic(),
+            # 使用 wall-clock，与相机 host 时间戳同时钟域，便于采图对齐校验
+            timestamp_s=time.time(),
             base_frame=self.ucs_name,
             ee_frame=self.tcp_name,
         )

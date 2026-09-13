@@ -10,6 +10,9 @@ from ...models import (
     IntrinsicCalibration, StreamProfile,
 )
 
+# 帧新鲜度参数：排空管线积压帧，确保返回的图像足够新（与关节角读取时刻对齐）
+FRAME_DRAIN_COUNT = 2
+
 
 class RealSenseAdapter(CameraAdapter):
     def __init__(
@@ -133,6 +136,9 @@ class RealSenseAdapter(CameraAdapter):
         if self._pipeline is None:
             raise AdapterError("RealSense camera is not started")
         frames = self._pipeline.wait_for_frames(self.timeout_ms)
+        # 排空积压帧：第一次取到的可能是运动期间排队的旧帧，连续等待拿到最新帧
+        for _ in range(FRAME_DRAIN_COUNT):
+            frames = self._pipeline.wait_for_frames(self.timeout_ms)
         color = frames.get_color_frame()
         depth = frames.get_depth_frame()
         if not color or not depth:

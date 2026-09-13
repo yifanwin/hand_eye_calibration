@@ -11,6 +11,10 @@ from ...models import (
     IntrinsicCalibration, StreamProfile,
 )
 
+# 帧新鲜度参数：排空管线积压帧，确保返回的图像足够新（与关节角读取时刻对齐）
+FRAME_DRAIN_COUNT = 2
+FRAME_DRAIN_TIMEOUT_MS = 100
+
 
 class OrbbecAdapter(CameraAdapter):
     def __init__(
@@ -121,6 +125,12 @@ class OrbbecAdapter(CameraAdapter):
         frames = self._pipeline.wait_for_frames(self.timeout_ms)
         if not frames:
             raise AdapterError("Orbbec frame timeout")
+        # 排空积压帧：第一次取到的可能是运动期间排队的旧帧，超时说明队列已空
+        for _ in range(FRAME_DRAIN_COUNT):
+            newer = self._pipeline.wait_for_frames(FRAME_DRAIN_TIMEOUT_MS)
+            if not newer:
+                break
+            frames = newer
         color, depth = frames.get_color_frame(), frames.get_depth_frame()
         if not color or not depth:
             raise AdapterError("Orbbec frameset is missing color or depth")
